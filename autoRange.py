@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 def axisIsLog( ax, axis ):
     if axis == 'x':
@@ -12,35 +14,53 @@ def axisMin( ax, axis ):
     xmin=float('+inf')
     isLog = axisIsLog( ax, axis )
     for line in ax.get_lines():
-        if axis == 'x':
-            x = line.get_xdata()
-        else:
-            x = line.get_ydata()
+        x = line.get_xdata()
+        y = line.get_ydata()
+        if axis == 'y':
+            x,y = y,x
+
+        import numpy as np
+        unmasked = np.logical_not( np.isnan(y) )
         if isLog:
-            x = x[ x>0 ]
-        xmin = min( xmin, min(x) )
+            np.logical_and( unmasked, x > 0 )
+
+        xmin = np.nanmin( np.concatenate( [ [xmin], np.array(x)[unmasked] ] ) )
     return xmin
 
 def axisMax( ax, axis ):
     xmax=float('-inf')
     isLog = axisIsLog( ax, axis )
+    # this is bugged when using axvline or axhline, because it doesn't ignore
+    # the huge values set by those functions. Workaround: Call autoRange
+    # before ax[v|h]line, but that is not always wanted
     for line in ax.get_lines():
-        if axis == 'x':
-            x = line.get_xdata()
-        else:
-            x = line.get_ydata()
+        x = line.get_xdata()
+        y = line.get_ydata()
+        if axis == 'y':
+            x,y = y,x
+
+        import numpy as np
+        # mask not only NaNs per each x,y, but also mask all y-values whose
+        # corresponding x-values are NaN!
+        unmasked = np.logical_not( np.isnan(y) )
         if isLog:
-            x = x[ x>0 ]
-        xmax = max( xmax, max(x) )
+            np.logical_and( unmasked, x > 0 )
+        # have to use numpy here, because of:
+        # https://stackoverflow.com/questions/4237914/python-max-min-builtin-functions-depend-on-parameter-order
+        xmax = np.nanmax( np.concatenate( [ [xmax], np.array(x)[unmasked] ] ) )
     return xmax
 
-def autoRange( ax, axis, lb, rb = None ):
-    if rb == None:
+def autoRange( axisObject, axisName, lb, rb = None ):
+    if lb is None:
+        return
+    if rb is None:
         rb = lb
-    isLog = axisIsLog( ax, axis )
+    ax = axisObject
+    isLog = axisIsLog( ax, axisName )
 
-    xmin = axisMin( ax, axis )
-    xmax = axisMax( ax, axis )
+    xmin = axisMin( ax, axisName )
+    xmax = axisMax( ax, axisName )
+    print( axisName + ": " + str(xmin) + "," + str(xmax) )
 
     from math import log,exp
 
@@ -53,7 +73,7 @@ def autoRange( ax, axis, lb, rb = None ):
         xmin -= lb*dx
         xmax += rb*dx
 
-    if axis == 'x':
+    if axisName == 'x':
         ax.set_xlim( [xmin,xmax] )
     else:
         ax.set_ylim( [xmin,xmax] )
@@ -69,6 +89,7 @@ def autoRangeXY( ax, lb = 0.1, rb = None, bb = None, tb = None ):
     autoRange( ax, 'x', lb, rb )
     autoRange( ax, 'y', bb, tb )
 
+from math import ceil
 def autoLabel( ax, axis, nbins=5, roundFunc=ceil ):
     """
     This functions is a workaround for ticks being too many or too few in
