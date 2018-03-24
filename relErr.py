@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 def relErr( x, y ):
     from numpy import zeros,abs

@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
 
 def bisectionExtrema( f,a,b,nIterations=16,debug=False ):
     """

@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
 
 def bisection(f,a,b,eps=1e-7):
     """

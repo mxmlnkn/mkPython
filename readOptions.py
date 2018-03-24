@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 def readOptions( fname ):
     """
@@ -7,8 +9,9 @@ def readOptions( fname ):
     defs = {}
     with open( fname ) as f:
         for line in f:
-            if line[0] != '#':
+            if line[0] != '#' or '=' not in line:
                 continue
+            #print( "[readOptions] line = " + line )
             lastKey = None
             # strip first char '#' and last char '\n' and split at spaces
             words = line[1:-1].split( ' ' )
@@ -16,8 +19,9 @@ def readOptions( fname ):
                 word = words[i]
                 if word == '' or word == "=":
                     continue
+                #print( "[readOptions] word = " + word )
 
-                kv = word.split( '=' )
+                kv = word.split( '=' )      # key value pair
                 assert( len(kv) <= 2 )
 
                 if len(kv) == 1:

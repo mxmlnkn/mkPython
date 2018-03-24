@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 def eulerOneStep(t0,h,v0,f):
     """

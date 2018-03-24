@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
 
 def newtonMethod(f,x0,eps=1e-7):
     """

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 def calcStatisticsFromDupes( x, y ):
     # If x contains duplicates, then those elements will be merged and the

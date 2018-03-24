@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 def rungeKutta4OneStep(f,dt,t0,v0):
     """
