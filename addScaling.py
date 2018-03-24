@@ -1,5 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 
 def shiftYWithAxisRatio( ax, y, r ):
     """
@@ -7,10 +8,10 @@ def shiftYWithAxisRatio( ax, y, r ):
     a ratio of the visible ylim, i.e. r=1 will increase y0 such that the new
     point would lie one y-axis-height above y0 (without a rescale)
     """
-    y = np.array( y )
+    from numpy import array, exp, log
+    y = array( y )
     y0 = ax.get_ylim()[0]
     y1 = ax.get_ylim()[1]
-    from numpy import exp, log
     # r=0 => return y0, r=1 => return y1
     return y * exp( r * log( y1/y0 ) )
 
@@ -50,8 +51,7 @@ def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, dis
     from scipy.stats import linregress
     nPointsPerSection = min( 5, len( x ) )
     slopes = []
-    from mkPython.ceilDiv import ceilDiv
-    for iSection in range( ceilDiv( len(x), nPointsPerSection ) ):
+    for iSection in range( len(x) // nPointsPerSection ):
         xSub = x[ iSection * nPointsPerSection : (iSection+1) * nPointsPerSection ]
         ySub = y[ iSection * nPointsPerSection : (iSection+1) * nPointsPerSection ]
         slope = linregress( xSub, ySub )[0]
@@ -74,7 +74,7 @@ def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, dis
         # exponent
         iPos, lengths = findSequences( iCloseSlopes )
         for i in range( 1, len( lengths )-1 ):
-            if lengths[i] < len( iCloseSlopes ) / 5:
+            if lengths[i] < len( iCloseSlopes ) // 5:
                 iCloseSlopes[ iPos[i] : iPos[i] + lengths[i] ] = True
         #print "iCloseSlopes (filled) =",iCloseSlopes
 
@@ -86,7 +86,7 @@ def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, dis
         xScaling = x[ iStart : iStart + np.max( lengths ) * nPointsPerSection ]
         yScaling = y[ iStart : iStart + np.max( lengths ) * nPointsPerSection ]
 
-        iFix = iStart + np.max( lengths ) * nPointsPerSection / 2
+        iFix = iStart + np.max( lengths ) * nPointsPerSection // 2
     else:
         if 0 <= interval[0] and interval[0] <= 1:
             xmin = np.min(x) + interval[0] * ( np.max(x) - np.min(x) )
@@ -101,7 +101,7 @@ def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, dis
         yScaling = y[ iToUse ]
         # @todo use a point in the middle to affix the y-shift instead off the
         #       the first or the last which can have a noticable different slope
-        iFix = iToUse[ len( iToUse ) / 2 ]
+        iFix = iToUse[ len( iToUse ) // 2 ]
     x0 = np.min( xScaling )  # is already the log of the source data!
     x1 = np.max( xScaling )
     y0 = np.min( yScaling )
@@ -145,7 +145,7 @@ def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, dis
     if logscaling is None:
         formula = "N"
         if exponent != 1:
-            formula += r"^" + str( exponent )
+            formula += r"^{" + str( exponent ) + "}"
     elif logscaling == 'log':
         formula = r"\mathrm{log}\left( N \right)"
     elif logscaling == 'nlog':
