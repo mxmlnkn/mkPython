@@ -43,7 +43,8 @@ def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, dis
     import numpy as np
 
     assert len(x) == len(y)
-    assert ( exponent is None ) != ( logscaling is None ) # only one may be set!
+    # if exponent is none, then fit the exponent
+    #assert ( exponent is None ) != ( logscaling is None ) # only one may be set!
 
     # Find significant intervals in (x,y) which scale with x^exponent
     x = np.log10( x )
@@ -64,7 +65,10 @@ def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, dis
     if logscaling is not None:
         exponent = 1
 
+    #### Calculate and limit the view to the range to be used ####
+
     if ( interval is None ) or ( len( interval ) == 0 ) or ( interval[0] is None ) or ( ( len( interval ) > 1 ) and interval[1] is None ):
+      if exponent is not None:
         # select all those 30% close to exponent
         iCloseSlopes = np.less_equal( np.abs( ( slopes - exponent ) / exponent ), 0.3 )
         #print "iCloseSlopes =",iCloseSlopes
@@ -87,15 +91,19 @@ def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, dis
         yScaling = y[ iStart : iStart + np.max( lengths ) * nPointsPerSection ]
 
         iFix = iStart + np.max( lengths ) * nPointsPerSection // 2
-    else:
-        if 0 <= interval[0] and interval[0] <= 1:
+    else: # if interval is given
+        # interval may be given in fractions of the plot space, check for that
+        # and scale it up to data-space interval range
+        if 0 <= interval[0] and interval[0] <= 1 and ( interval[0] < np.min(x) or interval[0] > np.max(x) ):
             xmin = np.min(x) + interval[0] * ( np.max(x) - np.min(x) )
         else:
             xmin = np.log10( interval[0] )
-        if 0 <= interval[1] and interval[1] <= 1:
+
+        if 0 <= interval[1] and interval[1] <= 1 and ( interval[1] < np.min(x) or interval[1] > np.max(x) ):
             xmax = np.min(x) + interval[1] * ( np.max(x) - np.min(x) )
         else:
             xmax = np.log10( interval[1] )
+
         iToUse = np.flatnonzero( np.logical_and( x >= xmin, x <= xmax ) )
         xScaling = x[ iToUse ]
         yScaling = y[ iToUse ]
@@ -108,6 +116,16 @@ def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, dis
     #print "x0 =",x0,", x1 =",x1,", y0 =",y0
     #print "iFix =",iFix
 
+    #### If no exponent was given, then try to fit the exponent ####
+    wasFitted = False
+    from scipy.stats import linregress
+    m,n,r,p,sm = linregress( xScaling, yScaling )
+    print( "Fit at scaling in interval [",10**xmin,",",10**xmax,"]: (",m,"+-",sm,") * x +",n,", correlation coefficient:",r,", p-value:",p )
+    if exponent is None :
+        exponent  = m
+        wasFitted = True
+
+    #### Begin to calculate the line to plot ####
     def scaling(x):
         if logscaling is None:
             return x ** exponent
@@ -136,16 +154,37 @@ def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, dis
 
     ax.plot( xScaling, yScaling, linestyle = '-', color = color )
     # add text label
-    xLabel = xScaling[ int( xLabelPos * len( xScaling ) ) ]
-    yLabel = yScaling[ int( xLabelPos * len( xScaling ) ) ]
+    xLabel = xScaling[ max( 0, min( len( xScaling )-1, int( xLabelPos * len( xScaling ) ) ) ) ]
+    yLabel = yScaling[ max( 0, min( len( yScaling )-1, int( xLabelPos * len( xScaling ) ) ) ) ]
     #distance = 0
     yDistance = 0# -distance / np.cos( np.arctan2( exponent, 1 ) )
     yLabel = shiftYWithAxisRatio( ax, yLabel, yDistance )
 
+    import numpy as np
+    def getMagnitude( x ):
+        return int( np.floor( np.log10( np.abs( x ) ) ) ) # -0 for < 10, 1 for 10 <= x < 100, -1 for 0.1 < x < 0, ...
+    def roundToSignificant( x, n ):
+        mag = getMagnitude( x )
+        # around only rounds to n-given decimals AFTER the dot, therefore we need to do the magnitude scaling, but this is actually helpful later for rounding the value in respect to the precision of the standard deviation
+        return np.around( x / 10**mag, n-1 ) * 10**mag
+    def getFirstDigit( x ):
+        mag = getMagnitude( x )
+        return int( x / 10**mag )
+
     if logscaling is None:
         formula = "N"
         if exponent != 1:
-            formula += r"^{" + str( exponent ) + "}"
+            if wasFitted:
+                # Format exponent and error https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4483789/
+                # Can't find that particular standard right now, but I thought some standard specified two significant digits for the first digit being < 3 and else one significant digits on the errors. And of course the mean should have as much precision as the error has
+                nDigits = 2 if getFirstDigit( sm ) in [1,2] else 1
+                magSm   = getMagnitude( sm )
+                smShort = roundToSignificant( sm, nDigits )
+                mShort  = np.around( m / 10**magSm, nDigits ) * 10**magSm
+                print( "m =",mShort,"+-",smShort )
+                formula += r"^{" + "{:.2f}".format( exponent ) + "}"
+            else:
+                formula += r"^{" + "{:.2f}".format( exponent ) + "}"
     elif logscaling == 'log':
         formula = r"\mathrm{log}\left( N \right)"
     elif logscaling == 'nlog':
