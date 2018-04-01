@@ -184,7 +184,7 @@ def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, dis
                 print( "m =",mShort,"+-",smShort )
                 formula += r"^{" + "{:.2f}".format( exponent ) + "}"
             else:
-                formula += r"^{" + "{:.2f}".format( exponent ) + "}"
+                formula += r"^{" + str( exponent ) + "}"
     elif logscaling == 'log':
         formula = r"\mathrm{log}\left( N \right)"
     elif logscaling == 'nlog':
