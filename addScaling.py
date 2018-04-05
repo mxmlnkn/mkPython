@@ -182,7 +182,10 @@ def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, dis
                 smShort = roundToSignificant( sm, nDigits )
                 mShort  = np.around( m / 10**magSm, nDigits ) * 10**magSm
                 print( "m =",mShort,"+-",smShort )
-                formula += r"^{" + "{:.2f}".format( exponent ) + "}"
+                rounded = np.around( exponent, 2 )
+                if rounded == 0.0: # or else it could be -0.0 as output -.-
+                    rounded = 0
+                formula += r"^{" + "{:.2f}".format( rounded ) + "}"
             else:
                 formula += r"^{" + str( exponent ) + "}"
     elif logscaling == 'log':

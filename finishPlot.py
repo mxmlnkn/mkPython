@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 
 
-def finishPlot( fig, ax = None, fname = "finishPlot", loc='best', left = None, bottom = None, right = None, top = None, wspace = None, hspace = None, close = False ):
+def finishPlot( fig, ax = None, fname = "finishPlot",
+    loc='best', bbox_to_anchor = None,
+    left = None, bottom = None, right = None, top = None,
+    wspace = None, hspace = None, close = False ):
     """
     Give ax = [] in order to not draw a legend
     """
@@ -14,7 +17,8 @@ def finishPlot( fig, ax = None, fname = "finishPlot", loc='best', left = None, b
     for a in ax:
         # frameon = True necessary to work with seaborn
         l = a.legend( loc = loc, prop = {'size':10}, labelspacing = 0.2, # fontsize=10 also works
-                      fancybox = True, framealpha = 0.5, frameon = True )
+                      fancybox = True, framealpha = 0.5, frameon = True,
+                      bbox_to_anchor = bbox_to_anchor )
     #if l != None:
     #    l.set_zorder(0)  # alternative to transparency
     fig.tight_layout()
