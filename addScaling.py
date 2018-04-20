@@ -15,7 +15,7 @@ def shiftYWithAxisRatio( ax, y, r ):
     # r=0 => return y0, r=1 => return y1
     return y * exp( r * log( y1/y0 ) )
 
-def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, distance = 0.02, logscaling = None, color = 'k' ):
+def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, distance = 0.02, logscaling = None, color = 'k', fontsize = None, varname = "N" ):
     """
     x,y     plot data, e.g. ax.get_lines()[-1].get_xdata() and get_ydata()
             can be used intuitively to add a scaling to the last plotted data
@@ -89,6 +89,8 @@ def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, dis
         #print "iStart =",iStart,", max(lengths) =", np.max(lengths)
         xScaling = x[ iStart : iStart + np.max( lengths ) * nPointsPerSection ]
         yScaling = y[ iStart : iStart + np.max( lengths ) * nPointsPerSection ]
+        if len( xScaling ) == 0:
+            return
 
         iFix = iStart + np.max( lengths ) * nPointsPerSection // 2
     else: # if interval is given
@@ -107,6 +109,9 @@ def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, dis
         iToUse = np.flatnonzero( np.logical_and( x >= xmin, x <= xmax ) )
         xScaling = x[ iToUse ]
         yScaling = y[ iToUse ]
+        if len( xScaling ) == 0:
+            return
+
         # @todo use a point in the middle to affix the y-shift instead off the
         #       the first or the last which can have a noticable different slope
         iFix = iToUse[ len( iToUse ) // 2 ]
@@ -156,6 +161,7 @@ def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, dis
     # add text label
     xLabel = xScaling[ max( 0, min( len( xScaling )-1, int( xLabelPos * len( xScaling ) ) ) ) ]
     yLabel = yScaling[ max( 0, min( len( yScaling )-1, int( xLabelPos * len( xScaling ) ) ) ) ]
+    xLabel = 10**( x0 + xLabelPos * (x1-x0) )
     #distance = 0
     yDistance = 0# -distance / np.cos( np.arctan2( exponent, 1 ) )
     yLabel = shiftYWithAxisRatio( ax, yLabel, yDistance )
@@ -172,7 +178,7 @@ def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, dis
         return int( x / 10**mag )
 
     if logscaling is None:
-        formula = "N"
+        formula = varname
         if exponent != 1:
             if wasFitted:
                 # Format exponent and error https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4483789/
@@ -189,13 +195,13 @@ def addScaling( ax, x, y, exponent = None, xLabelPos = 0.5, interval = None, dis
             else:
                 formula += r"^{" + str( exponent ) + "}"
     elif logscaling == 'log':
-        formula = r"\mathrm{log}\left( N \right)"
+        formula = r"\mathrm{log}\left( " + varname + r" \right)"
     elif logscaling == 'nlog':
-        formula = r"N \mathrm{log}\left( N \right)"
+        formula = varname + r" \mathrm{log}\left( " + varname + r" \right)"
     elif logscaling == 'nlog2':
-        formula = r"N \mathrm{log}^2\left( N \right)"
+        formula = varname + r" \mathrm{log}^2\left( " + varname + r" \right)"
     ax.annotate( r"$\mathcal{O}\left(" + formula + r"\right)$",
                  ( xLabel, yLabel ),
                  horizontalalignment = 'left' if distance > 0 else 'right',
                  verticalalignment = 'top' if distance > 0 else 'bottom',
-                 color = color )
+                 color = color, fontsize = fontsize )
